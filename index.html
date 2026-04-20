@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>공지봇 관리자 페이지</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Apple SD Gothic Neo', sans-serif; background: #f5f6fa; color: #333; }
+    header { background: #1a1a2e; color: white; padding: 16px 24px; }
+    header h1 { font-size: 20px; }
+    .tabs { display: flex; background: white; border-bottom: 2px solid #e0e0e0; padding: 0 24px; }
+    .tab { padding: 14px 20px; cursor: pointer; font-weight: 600; color: #888; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+    .tab.active { color: #4f46e5; border-bottom-color: #4f46e5; }
+    .tab-content { display: none; padding: 24px; }
+    .tab-content.active { display: block; }
+    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .card h2 { font-size: 16px; margin-bottom: 16px; color: #1a1a2e; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 12px; color: #666; font-weight: 600; }
+    input, select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; width: 100%; }
+    input:focus, select:focus { outline: none; border-color: #4f46e5; }
+    button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; }
+    .btn-primary { background: #4f46e5; color: white; }
+    .btn-primary:hover { background: #3730a3; }
+    .btn-secondary { background: #f3f4f6; color: #333; }
+    .btn-secondary:hover { background: #e5e7eb; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-success { background: #10b981; color: white; }
+    .btn-success:hover { background: #059669; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 10px 12px; font-size: 12px; color: #666; border-bottom: 2px solid #f0f0f0; }
+    td { padding: 12px; font-size: 14px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-pending { background: #fef3c7; color: #d97706; }
+    .badge-links_entered { background: #dbeafe; color: #2563eb; }
+    .badge-sent { background: #d1fae5; color: #059669; }
+    .badge-cancelled { background: #fee2e2; color: #dc2626; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 16px; padding: 24px; width: 500px; max-width: 95vw; }
+    .modal h3 { margin-bottom: 16px; font-size: 18px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+    .empty { color: #aaa; text-align: center; padding: 32px; font-size: 14px; }
+    .flex { display: flex; gap: 8px; align-items: center; }
+    .mt-12 { margin-top: 12px; }
+    .text-sm { font-size: 13px; color: #666; }
+    .event-type { font-weight: 700; color: #4f46e5; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; }
+    .filter-bar select { max-width: 180px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📣 공지봇 관리자 페이지</h1>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('tracks')">트랙 / 회차 관리</div>
+  <div class="tab" onclick="switchTab('events')">이벤트 관리</div>
+</div>
+
+<!-- ===== 트랙/회차 탭 ===== -->
+<div id="tab-tracks" class="tab-content active">
+
+  <!-- 트랙 추가 -->
+  <div class="card">
+    <h2>트랙 추가</h2>
+    <div class="flex">
+      <input type="text" id="trackName" placeholder="트랙명 (예: iOS, Android, Web)" style="max-width:300px">
+      <button class="btn-primary" onclick="addTrack()">추가</button>
+    </div>
+  </div>
+
+  <!-- 회차 추가 -->
+  <div class="card">
+    <h2>회차 추가</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>트랙 선택</label>
+        <select id="cohortTrack"></select>
+      </div>
+      <div class="form-group">
+        <label>회차명</label>
+        <input type="text" id="cohortName" placeholder="예: 9회차">
+      </div>
+      <div class="form-group">
+        <label>Spreadsheet ID</label>
+        <input type="text" id="cohortSpreadsheetId" placeholder="구글 시트 ID">
+      </div>
+      <div class="form-group">
+        <label>Sheet Name</label>
+        <input type="text" id="cohortSheetName" placeholder="예: iOS_시간표">
+      </div>
+      <div class="form-group full">
+        <label>ZEP URL</label>
+        <input type="text" id="cohortZepUrl" placeholder="https://zep.us/...">
+      </div>
+      <div class="form-group full">
+        <label>슬랙 수강생 Webhook URL</label>
+        <input type="text" id="cohortSlackStudent" placeholder="https://hooks.slack.com/...">
+      </div>
+      <div class="form-group full">
+        <label>슬랙 운영진 Webhook URL</label>
+        <input type="text" id="cohortSlackOps" placeholder="https://hooks.slack.com/...">
+      </div>
+      <div class="form-group">
+        <label>튜터 슬랙 핸들</label>
+        <input type="text" id="cohortTutor" placeholder="예: @tutor_name">
+      </div>
+      <div class="form-group">
+        <label>학관매 슬랙 핸들</label>
+        <input type="text" id="cohortHakgwanmae" placeholder="예: @manager_name">
+      </div>
+      <div class="form-group">
+        <label>시작일</label>
+        <input type="date" id="cohortStartDate">
+      </div>
+      <div class="form-group">
+        <label>종료일</label>
+        <input type="date" id="cohortEndDate">
+      </div>
+    </div>
+    <button class="btn-primary mt-12" onclick="addCohort()">회차 추가</button>
+  </div>
+
+  <!-- 트랙/회차 목록 -->
+  <div class="card">
+    <div class="section-header">
+      <h2>트랙 / 회차 목록</h2>
+      <button class="btn-secondary btn-sm" onclick="loadTracks()">새로고침</button>
+    </div>
+    <div id="trackList"><div class="empty">불러오는 중...</div></div>
+  </div>
+</div>
+
+<!-- ===== 이벤트 탭 ===== -->
+<div id="tab-events" class="tab-content">
+  <div class="card">
+    <div class="section-header">
+      <h2>이벤트 목록</h2>
+      <button class="btn-secondary btn-sm" onclick="loadEvents()">새로고침</button>
+    </div>
+    <div class="filter-bar">
+      <select id="filterTrack" onchange="filterCohorts()">
+        <option value="">전체 트랙</option>
+      </select>
+      <select id="filterCohort" onchange="loadEvents()">
+        <option value="">전체 회차</option>
+      </select>
+      <select id="filterStatus" onchange="loadEvents()">
+        <option value="">전체 상태</option>
+        <option value="pending">링크 입력 대기</option>
+        <option value="links_entered">링크 입력 완료</option>
+        <option value="sent">발송 완료</option>
+        <option value="cancelled">취소됨</option>
+      </select>
+    </div>
+    <div id="eventList"><div class="empty">불러오는 중...</div></div>
+  </div>
+</div>
+
+<!-- ===== 링크 입력 모달 ===== -->
+<div class="modal-overlay" id="linkModal">
+  <div class="modal">
+    <h3 id="modalTitle">링크 입력</h3>
+    <input type="hidden" id="modalEventId">
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>수강생용 링크 (LMS 실시간 강의 URL)</label>
+        <input type="text" id="modalStudentLink" placeholder="https://...">
+      </div>
+      <div class="form-group full">
+        <label>운영진용 링크 (Zoom 호스트 URL)</label>
+        <input type="text" id="modalOpsLink" placeholder="https://...">
+      </div>
+      <div class="form-group full">
+        <label>교안 링크 (노션 또는 PDF URL)</label>
+        <input type="text" id="modalMaterialUrl" placeholder="https://...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">취소</button>
+      <button class="btn-success" onclick="saveLinks()">저장 및 공지 준비</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ===== Supabase 설정 =====
+  const SUPABASE_URL = 'https://eolzzwkfquhaiajxlqwb.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvbHp6d2tmcXVoYWlhanhscXdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNDQ5MjMsImV4cCI6MjA5MTkyMDkyM30.NLwWCaMYTbfxdoXOxjkhaxFE1m75xvhIHnnfuVnsDjA'; // ← 여기에 anon key 붙여넣기
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ===== 탭 전환 =====
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    if (tab === 'tracks') loadTracks();
+    if (tab === 'events') { loadFilterTracks(); loadEvents(); }
+  }
+
+  let allTracks = [];
+  let allCohorts = [];
+
+  // ===== 트랙 추가 =====
+  async function addTrack() {
+    const name = document.getElementById('trackName').value.trim();
+    if (!name) return alert('트랙명을 입력해주세요.');
+    const { error } = await sb.from('tracks').insert({ name });
+    if (error) return alert('오류: ' + error.message);
+    document.getElementById('trackName').value = '';
+    loadTracks();
+    loadCohortTrackOptions();
+  }
+
+  // ===== 회차 추가 =====
+  async function addCohort() {
+    const track_id = document.getElementById('cohortTrack').value;
+    const name = document.getElementById('cohortName').value.trim();
+    if (!track_id || !name) return alert('트랙과 회차명을 입력해주세요.');
+    const { error } = await sb.from('cohorts').insert({
+      track_id,
+      name,
+      spreadsheet_id: document.getElementById('cohortSpreadsheetId').value.trim(),
+      sheet_name: document.getElementById('cohortSheetName').value.trim(),
+      zep_url: document.getElementById('cohortZepUrl').value.trim(),
+      slack_student_webhook: document.getElementById('cohortSlackStudent').value.trim(),
+      slack_ops_webhook: document.getElementById('cohortSlackOps').value.trim(),
+      tutor_handle: document.getElementById('cohortTutor').value.trim(),
+      hakgwanmae_handle: document.getElementById('cohortHakgwanmae').value.trim(),
+      start_date: document.getElementById('cohortStartDate').value || null,
+      end_date: document.getElementById('cohortEndDate').value || null,
+    });
+    if (error) return alert('오류: ' + error.message);
+    alert('회차가 추가되었습니다!');
+    ['cohortName','cohortSpreadsheetId','cohortSheetName','cohortZepUrl',
+     'cohortSlackStudent','cohortSlackOps','cohortTutor','cohortHakgwanmae',
+     'cohortStartDate','cohortEndDate'].forEach(id => document.getElementById(id).value = '');
+    loadTracks();
+  }
+
+  // ===== 트랙 목록 로드 =====
+  async function loadTracks() {
+    const { data: tracks, error } = await sb.from('tracks').select('*, cohorts(*)').order('created_at');
+    if (error) return;
+    allTracks = tracks;
+    const el = document.getElementById('trackList');
+    if (!tracks.length) { el.innerHTML = '<div class="empty">등록된 트랙이 없습니다.</div>'; return; }
+    el.innerHTML = tracks.map(t => `
+      <div style="margin-bottom:16px">
+        <div style="font-weight:700;font-size:15px;color:#1a1a2e;margin-bottom:8px">
+          🏷️ ${t.name}
+          <button class="btn-secondary btn-sm" style="margin-left:8px" onclick="deleteTrack('${t.id}','${t.name}')">삭제</button>
+        </div>
+        ${t.cohorts && t.cohorts.length ? `
+          <table>
+            <thead><tr><th>회차</th><th>시트명</th><th>기간</th><th>액션</th></tr></thead>
+            <tbody>
+              ${t.cohorts.map(c => `
+                <tr>
+                  <td>${c.name}</td>
+                  <td class="text-sm">${c.sheet_name || '-'}</td>
+                  <td class="text-sm">${c.start_date || ''} ~ ${c.end_date || ''}</td>
+                  <td><button class="btn-secondary btn-sm" onclick="deleteCohort('${c.id}','${c.name}')">삭제</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>` : '<div class="text-sm" style="padding:8px;color:#aaa">등록된 회차 없음</div>'}
+      </div>
+    `).join('<hr style="margin:16px 0;border:none;border-top:1px solid #f0f0f0">');
+    loadCohortTrackOptions();
+  }
+
+  async function deleteTrack(id, name) {
+    if (!confirm(`"${name}" 트랙을 삭제하시겠습니까? 하위 회차도 모두 삭제됩니다.`)) return;
+    await sb.from('tracks').delete().eq('id', id);
+    loadTracks();
+  }
+
+  async function deleteCohort(id, name) {
+    if (!confirm(`"${name}" 회차를 삭제하시겠습니까?`)) return;
+    await sb.from('cohorts').delete().eq('id', id);
+    loadTracks();
+  }
+
+  // ===== 회차 추가 폼 트랙 옵션 =====
+  async function loadCohortTrackOptions() {
+    const { data: tracks } = await sb.from('tracks').select('id, name').order('created_at');
+    const sel = document.getElementById('cohortTrack');
+    sel.innerHTML = '<option value="">트랙 선택</option>' +
+      (tracks || []).map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  }
+
+  // ===== 이벤트 필터 트랙 =====
+  async function loadFilterTracks() {
+    const { data: tracks } = await sb.from('tracks').select('id, name').order('created_at');
+    allTracks = tracks || [];
+    const sel = document.getElementById('filterTrack');
+    sel.innerHTML = '<option value="">전체 트랙</option>' +
+      allTracks.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+    await loadFilterCohorts();
+  }
+
+  async function filterCohorts() {
+    await loadFilterCohorts();
+    loadEvents();
+  }
+
+  async function loadFilterCohorts() {
+    const trackId = document.getElementById('filterTrack').value;
+    let query = sb.from('cohorts').select('id, name, track_id').order('created_at');
+    if (trackId) query = query.eq('track_id', trackId);
+    const { data: cohorts } = await query;
+    allCohorts = cohorts || [];
+    const sel = document.getElementById('filterCohort');
+    sel.innerHTML = '<option value="">전체 회차</option>' +
+      allCohorts.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
+
+  // ===== 이벤트 목록 로드 =====
+  async function loadEvents() {
+    const cohortId = document.getElementById('filterCohort').value;
+    const status = document.getElementById('filterStatus').value;
+    const trackId = document.getElementById('filterTrack').value;
+
+    let query = sb.from('events').select('*, cohorts(name, track_id, tracks(name))').order('send_time', { ascending: true });
+    if (cohortId) query = query.eq('cohort_id', cohortId);
+    if (status) query = query.eq('status', status);
+
+    const { data: events, error } = await query;
+    if (error) return;
+
+    let filtered = events || [];
+    if (trackId && !cohortId) {
+      filtered = filtered.filter(e => e.cohorts?.track_id === trackId);
+    }
+
+    const el = document.getElementById('eventList');
+    if (!filtered.length) { el.innerHTML = '<div class="empty">이벤트가 없습니다.</div>'; return; }
+
+    const statusLabel = { pending: '링크 대기', links_entered: '링크 입력됨', sent: '발송완료', cancelled: '취소됨' };
+
+    el.innerHTML = `<table>
+      <thead><tr><th>트랙/회차</th><th>이벤트</th><th>일시</th><th>상태</th><th>액션</th></tr></thead>
+      <tbody>
+        ${filtered.map(e => `
+          <tr>
+            <td class="text-sm">${e.cohorts?.tracks?.name || ''} / ${e.cohorts?.name || ''}</td>
+            <td>
+              <span class="event-type">[${e.type}]</span> ${e.title}
+              ${e.zoom_url ? '<br><span class="text-sm">🎥 줌 자동생성됨</span>' : ''}
+            </td>
+            <td class="text-sm">${e.date || ''} ${e.start_time || ''}~${e.end_time || ''}</td>
+            <td><span class="badge badge-${e.status}">${statusLabel[e.status] || e.status}</span></td>
+            <td>
+              ${e.status !== 'sent' && e.status !== 'cancelled' ?
+                `<button class="btn-primary btn-sm" onclick="openModal('${e.id}','${(e.title||'').replace(/'/g,"\\'")}','${e.student_link||''}','${e.ops_link||''}','${e.material_url||''}')">링크 입력</button>` : ''}
+              ${e.status === 'pending' ?
+                `<button class="btn-secondary btn-sm" style="margin-left:4px" onclick="cancelEvent('${e.id}')">취소</button>` : ''}
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  // ===== 이벤트 취소 =====
+  async function cancelEvent(id) {
+    if (!confirm('이 이벤트의 공지를 취소하시겠습니까?')) return;
+    await sb.from('events').update({ status: 'cancelled' }).eq('id', id);
+    loadEvents();
+  }
+
+  // ===== 링크 입력 모달 =====
+  function openModal(id, title, studentLink, opsLink, materialUrl) {
+    document.getElementById('modalEventId').value = id;
+    document.getElementById('modalTitle').textContent = `링크 입력: ${title}`;
+    document.getElementById('modalStudentLink').value = studentLink !== 'null' ? studentLink : '';
+    document.getElementById('modalOpsLink').value = opsLink !== 'null' ? opsLink : '';
+    document.getElementById('modalMaterialUrl').value = materialUrl !== 'null' ? materialUrl : '';
+    document.getElementById('linkModal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('linkModal').classList.remove('open');
+  }
+
+  async function saveLinks() {
+    const id = document.getElementById('modalEventId').value;
+    const student_link = document.getElementById('modalStudentLink').value.trim();
+    const ops_link = document.getElementById('modalOpsLink').value.trim();
+    const material_url = document.getElementById('modalMaterialUrl').value.trim();
+
+    const { error } = await sb.from('events').update({
+      student_link,
+      ops_link,
+      material_url,
+      status: 'links_entered'
+    }).eq('id', id);
+
+    if (error) return alert('저장 오류: ' + error.message);
+    closeModal();
+    loadEvents();
+    // TODO: n8n에 webhook으로 알림 보내기 (다음 단계)
+  }
+
+  // ===== 초기 로드 =====
+  loadTracks();
+  loadCohortTrackOptions();
+</script>
+</body>
+</html>

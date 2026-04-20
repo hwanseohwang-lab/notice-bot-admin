@@ -53,6 +53,7 @@
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; }
     .filter-bar select { max-width: 180px; }
+    .row-highlight { background: #fffbeb !important; outline: 2px solid #f59e0b; }
   </style>
 </head>
 <body>
@@ -222,6 +223,11 @@
     loadCohortTrackOptions();
   }
 
+  function extractSpreadsheetId(input) {
+    const match = input.match(/\/d\/([a-zA-Z0-9-_]+)/);
+    return match ? match[1] : input.trim();
+  }
+
   // ===== 회차 추가 =====
   async function addCohort() {
     const track_id = document.getElementById('cohortTrack').value;
@@ -230,7 +236,7 @@
     const { error } = await sb.from('cohorts').insert({
       track_id,
       name,
-      spreadsheet_id: document.getElementById('cohortSpreadsheetId').value.trim(),
+      spreadsheet_id: extractSpreadsheetId(document.getElementById('cohortSpreadsheetId').value),
       sheet_name: document.getElementById('cohortSheetName').value.trim(),
       zep_url: document.getElementById('cohortZepUrl').value.trim(),
       slack_student_webhook: document.getElementById('cohortSlackStudent').value.trim(),
@@ -353,7 +359,7 @@
       <thead><tr><th>트랙/회차</th><th>이벤트</th><th>일시</th><th>상태</th><th>액션</th></tr></thead>
       <tbody>
         ${filtered.map(e => `
-          <tr>
+          <tr data-event-id="${e.id}">
             <td class="text-sm">${e.cohorts?.tracks?.name || ''} / ${e.cohorts?.name || ''}</td>
             <td>
               <span class="event-type">[${e.type}]</span> ${e.title}
@@ -413,9 +419,39 @@
     // TODO: n8n에 webhook으로 알림 보내기 (다음 단계)
   }
 
+  // ===== URL 파라미터 처리 =====
+  async function checkUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    const eventId = params.get('event_id');
+    if (!eventId) return;
+
+    switchTab('events');
+    await new Promise(r => setTimeout(r, 500));
+
+    const { data: events } = await sb.from('events')
+      .select('*, cohorts(name, track_id)')
+      .eq('id', eventId);
+    if (!events || !events.length) return;
+
+    const e = events[0];
+
+    // 해당 row 하이라이트
+    const row = document.querySelector(`tr[data-event-id="${eventId}"]`);
+    if (row) {
+      row.classList.add('row-highlight');
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // pending 상태면 모달 자동 열기
+    if (e.status !== 'sent' && e.status !== 'cancelled') {
+      openModal(e.id, e.title || '', e.student_link || '', e.ops_link || '', e.material_url || '');
+    }
+  }
+
   // ===== 초기 로드 =====
   loadTracks();
   loadCohortTrackOptions();
+  checkUrlParams();
 </script>
 </body>
 </html>

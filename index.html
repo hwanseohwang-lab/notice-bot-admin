@@ -417,7 +417,13 @@
     if (error) return alert('저장 오류: ' + error.message);
     closeModal();
     loadEvents();
-    // TODO: n8n에 webhook으로 알림 보내기 (다음 단계)
+    if (material_url) {
+      fetch('https://teamsparta-ax.app.n8n.cloud/webhook/df2eaa88-964d-4c11-9970-8e313ed8af49', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_id: id, material_url })
+      });
+    }
   }
 
   // ===== URL 파라미터 처리 =====

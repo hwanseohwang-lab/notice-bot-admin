@@ -104,12 +104,12 @@
         <input type="text" id="cohortZepUrl" placeholder="https://zep.us/...">
       </div>
       <div class="form-group full">
-        <label>슬랙 수강생 Webhook URL</label>
-        <input type="text" id="cohortSlackStudent" placeholder="https://hooks.slack.com/...">
+        <label>슬랙 수강생 채널 ID</label>
+        <input type="text" id="cohortSlackStudent" placeholder="C0XXXXXXXXX">
       </div>
       <div class="form-group full">
-        <label>슬랙 운영진 Webhook URL</label>
-        <input type="text" id="cohortSlackOps" placeholder="https://hooks.slack.com/...">
+        <label>슬랙 운영진 채널 ID</label>
+        <input type="text" id="cohortSlackOps" placeholder="C0XXXXXXXXX">
       </div>
       <div class="form-group">
         <label>튜터 슬랙 핸들</label>
@@ -368,10 +368,11 @@
             <td class="text-sm">${e.date || ''} ${e.start_time || ''}~${e.end_time || ''}</td>
             <td><span class="badge badge-${e.status}">${statusLabel[e.status] || e.status}</span></td>
             <td>
-              ${e.status !== 'sent' && e.status !== 'cancelled' ?
-                `<button class="btn-primary btn-sm" onclick="openModal('${e.id}','${(e.title||'').replace(/'/g,"\\'")}','${e.student_link||''}','${e.ops_link||''}','${e.material_url||''}')">링크 입력</button>` : ''}
               ${e.status === 'pending' ?
-                `<button class="btn-secondary btn-sm" style="margin-left:4px" onclick="cancelEvent('${e.id}')">취소</button>` : ''}
+                `<button class="btn-primary btn-sm" onclick="openModal('${e.id}','${(e.title||'').replace(/'/g,"\\'")}','${e.student_link||''}','${e.ops_link||''}','${e.material_url||''}')">링크 입력</button>
+                 <button class="btn-secondary btn-sm" style="margin-left:4px" onclick="cancelEvent('${e.id}')">취소</button>` : ''}
+              ${e.status === 'links_entered' || e.status === 'sent' ?
+                `<button class="btn-secondary btn-sm" onclick="openModal('${e.id}','${(e.title||'').replace(/'/g,"\\'")}','${e.student_link||''}','${e.ops_link||''}','${e.material_url||''}')">수정</button>` : ''}
             </td>
           </tr>
         `).join('')}

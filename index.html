@@ -21,16 +21,20 @@
     .form-group { display: flex; flex-direction: column; gap: 4px; }
     .form-group.full { grid-column: 1 / -1; }
     label { font-size: 12px; color: #666; font-weight: 600; }
-    input, select { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; width: 100%; }
-    input:focus, select:focus { outline: none; border-color: #4f46e5; }
+    input, select, textarea { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; width: 100%; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #4f46e5; }
     button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; }
     .btn-primary { background: #4f46e5; color: white; }
     .btn-primary:hover { background: #3730a3; }
     .btn-secondary { background: #f3f4f6; color: #333; }
     .btn-secondary:hover { background: #e5e7eb; }
-    .btn-sm { padding: 6px 12px; font-size: 12px; }
     .btn-success { background: #10b981; color: white; }
     .btn-success:hover { background: #059669; }
+    .btn-warning { background: #f59e0b; color: white; }
+    .btn-warning:hover { background: #d97706; }
+    .btn-danger { background: #ef4444; color: white; }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
     table { width: 100%; border-collapse: collapse; }
     th { text-align: left; padding: 10px 12px; font-size: 12px; color: #666; border-bottom: 2px solid #f0f0f0; }
     td { padding: 12px; font-size: 14px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
@@ -42,7 +46,7 @@
     .badge-cancelled { background: #fee2e2; color: #dc2626; }
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
     .modal-overlay.open { display: flex; }
-    .modal { background: white; border-radius: 16px; padding: 24px; width: 500px; max-width: 95vw; }
+    .modal { background: white; border-radius: 16px; padding: 24px; width: 500px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
     .modal h3 { margin-bottom: 16px; font-size: 18px; }
     .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
     .empty { color: #aaa; text-align: center; padding: 32px; font-size: 14px; }
@@ -51,9 +55,12 @@
     .text-sm { font-size: 13px; color: #666; }
     .event-type { font-weight: 700; color: #4f46e5; }
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; }
+    .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
     .filter-bar select { max-width: 180px; }
     .row-highlight { background: #fffbeb !important; outline: 2px solid #f59e0b; }
+    input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: #4f46e5; }
+    .bulk-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; padding: 10px 12px; background: #f8f9ff; border-radius: 8px; border: 1px solid #e0e0ff; }
+    .bulk-bar span { font-size: 13px; color: #4f46e5; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -163,6 +170,11 @@
         <option value="cancelled">취소됨</option>
       </select>
     </div>
+    <div id="bulkBar" class="bulk-bar" style="display:none">
+      <span id="selectedCount">0개 선택됨</span>
+      <button class="btn-danger btn-sm" onclick="deleteSelectedEvents()">선택 삭제</button>
+      <button class="btn-secondary btn-sm" onclick="clearSelection()">선택 해제</button>
+    </div>
     <div id="eventList"><div class="empty">불러오는 중...</div></div>
   </div>
 </div>
@@ -198,10 +210,79 @@
   </div>
 </div>
 
+<!-- ===== 트랙 수정 모달 ===== -->
+<div class="modal-overlay" id="editTrackModal">
+  <div class="modal">
+    <h3>트랙 수정</h3>
+    <input type="hidden" id="editTrackId">
+    <div class="form-group">
+      <label>트랙명</label>
+      <input type="text" id="editTrackName" placeholder="트랙명">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeEditTrackModal()">취소</button>
+      <button class="btn-primary" onclick="saveTrackEdit()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 회차 수정 모달 ===== -->
+<div class="modal-overlay" id="editCohortModal">
+  <div class="modal">
+    <h3>회차 수정</h3>
+    <input type="hidden" id="editCohortId">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>회차명</label>
+        <input type="text" id="editCohortName" placeholder="예: 9회차">
+      </div>
+      <div class="form-group">
+        <label>Sheet Name</label>
+        <input type="text" id="editCohortSheetName" placeholder="예: iOS_시간표">
+      </div>
+      <div class="form-group full">
+        <label>Spreadsheet ID</label>
+        <input type="text" id="editCohortSpreadsheetId" placeholder="구글 시트 ID">
+      </div>
+      <div class="form-group full">
+        <label>ZEP URL</label>
+        <input type="text" id="editCohortZepUrl" placeholder="https://zep.us/...">
+      </div>
+      <div class="form-group full">
+        <label>슬랙 수강생 채널 ID</label>
+        <input type="text" id="editCohortSlackStudent" placeholder="C0XXXXXXXXX">
+      </div>
+      <div class="form-group full">
+        <label>슬랙 운영진 채널 ID</label>
+        <input type="text" id="editCohortSlackOps" placeholder="C0XXXXXXXXX">
+      </div>
+      <div class="form-group">
+        <label>튜터 슬랙 핸들</label>
+        <input type="text" id="editCohortTutor" placeholder="예: @tutor_name">
+      </div>
+      <div class="form-group">
+        <label>학관매 슬랙 핸들</label>
+        <input type="text" id="editCohortHakgwanmae" placeholder="예: @manager_name">
+      </div>
+      <div class="form-group">
+        <label>시작일</label>
+        <input type="date" id="editCohortStartDate">
+      </div>
+      <div class="form-group">
+        <label>종료일</label>
+        <input type="date" id="editCohortEndDate">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeEditCohortModal()">취소</button>
+      <button class="btn-primary" onclick="saveCohortEdit()">저장</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  // ===== Supabase 설정 =====
   const SUPABASE_URL = 'https://eolzzwkfquhaiajxlqwb.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvbHp6d2tmcXVoYWlhanhscXdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNDQ5MjMsImV4cCI6MjA5MTkyMDkyM30.NLwWCaMYTbfxdoXOxjkhaxFE1m75xvhIHnnfuVnsDjA'; // ← 여기에 anon key 붙여넣기
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvbHp6d2tmcXVoYWlhanhscXdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNDQ5MjMsImV4cCI6MjA5MTkyMDkyM30.NLwWCaMYTbfxdoXOxjkhaxFE1m75xvhIHnnfuVnsDjA';
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ===== 탭 전환 =====
@@ -226,6 +307,27 @@
     document.getElementById('trackName').value = '';
     loadTracks();
     loadCohortTrackOptions();
+  }
+
+  // ===== 트랙 수정 =====
+  function openEditTrackModal(id, name) {
+    document.getElementById('editTrackId').value = id;
+    document.getElementById('editTrackName').value = name;
+    document.getElementById('editTrackModal').classList.add('open');
+  }
+
+  function closeEditTrackModal() {
+    document.getElementById('editTrackModal').classList.remove('open');
+  }
+
+  async function saveTrackEdit() {
+    const id = document.getElementById('editTrackId').value;
+    const name = document.getElementById('editTrackName').value.trim();
+    if (!name) return alert('트랙명을 입력해주세요.');
+    const { error } = await sb.from('tracks').update({ name }).eq('id', id);
+    if (error) return alert('오류: ' + error.message);
+    closeEditTrackModal();
+    loadTracks();
   }
 
   function extractSpreadsheetId(input) {
@@ -259,6 +361,49 @@
     loadTracks();
   }
 
+  // ===== 회차 수정 =====
+  async function openEditCohortModal(id) {
+    const { data, error } = await sb.from('cohorts').select('*').eq('id', id).single();
+    if (error || !data) return alert('회차 정보를 불러오지 못했습니다.');
+    document.getElementById('editCohortId').value = data.id;
+    document.getElementById('editCohortName').value = data.name || '';
+    document.getElementById('editCohortSheetName').value = data.sheet_name || '';
+    document.getElementById('editCohortSpreadsheetId').value = data.spreadsheet_id || '';
+    document.getElementById('editCohortZepUrl').value = data.zep_url || '';
+    document.getElementById('editCohortSlackStudent').value = data.slack_student_webhook || '';
+    document.getElementById('editCohortSlackOps').value = data.slack_ops_webhook || '';
+    document.getElementById('editCohortTutor').value = data.tutor_handle || '';
+    document.getElementById('editCohortHakgwanmae').value = data.hakgwanmae_handle || '';
+    document.getElementById('editCohortStartDate').value = data.start_date || '';
+    document.getElementById('editCohortEndDate').value = data.end_date || '';
+    document.getElementById('editCohortModal').classList.add('open');
+  }
+
+  function closeEditCohortModal() {
+    document.getElementById('editCohortModal').classList.remove('open');
+  }
+
+  async function saveCohortEdit() {
+    const id = document.getElementById('editCohortId').value;
+    const name = document.getElementById('editCohortName').value.trim();
+    if (!name) return alert('회차명을 입력해주세요.');
+    const { error } = await sb.from('cohorts').update({
+      name,
+      spreadsheet_id: extractSpreadsheetId(document.getElementById('editCohortSpreadsheetId').value),
+      sheet_name: document.getElementById('editCohortSheetName').value.trim(),
+      zep_url: document.getElementById('editCohortZepUrl').value.trim(),
+      slack_student_webhook: document.getElementById('editCohortSlackStudent').value.trim(),
+      slack_ops_webhook: document.getElementById('editCohortSlackOps').value.trim(),
+      tutor_handle: document.getElementById('editCohortTutor').value.trim(),
+      hakgwanmae_handle: document.getElementById('editCohortHakgwanmae').value.trim(),
+      start_date: document.getElementById('editCohortStartDate').value || null,
+      end_date: document.getElementById('editCohortEndDate').value || null,
+    }).eq('id', id);
+    if (error) return alert('오류: ' + error.message);
+    closeEditCohortModal();
+    loadTracks();
+  }
+
   // ===== 트랙 목록 로드 =====
   async function loadTracks() {
     const { data: tracks, error } = await sb.from('tracks').select('*, cohorts(*)').order('created_at');
@@ -270,7 +415,8 @@
       <div style="margin-bottom:16px">
         <div style="font-weight:700;font-size:15px;color:#1a1a2e;margin-bottom:8px">
           🏷️ ${t.name}
-          <button class="btn-secondary btn-sm" style="margin-left:8px" onclick="deleteTrack('${t.id}','${t.name}')">삭제</button>
+          <button class="btn-warning btn-sm" style="margin-left:8px" onclick="openEditTrackModal('${t.id}','${t.name.replace(/'/g,"\\'")}')">수정</button>
+          <button class="btn-secondary btn-sm" style="margin-left:4px" onclick="deleteTrack('${t.id}','${t.name.replace(/'/g,"\\'")}')">삭제</button>
         </div>
         ${t.cohorts && t.cohorts.length ? `
           <table>
@@ -282,8 +428,9 @@
                   <td class="text-sm">${c.sheet_name || '-'}</td>
                   <td class="text-sm">${c.start_date || ''} ~ ${c.end_date || ''}</td>
                   <td>
-                    <button class="btn-primary btn-sm" onclick="importSchedule('${c.id}','${c.name}')">시간표 불러오기</button>
-                    <button class="btn-secondary btn-sm" style="margin-left:4px" onclick="deleteCohort('${c.id}','${c.name}')">삭제</button>
+                    <button class="btn-primary btn-sm" onclick="importSchedule('${c.id}','${c.name.replace(/'/g,"\\'")}')">시간표 불러오기</button>
+                    <button class="btn-warning btn-sm" style="margin-left:4px" onclick="openEditCohortModal('${c.id}')">수정</button>
+                    <button class="btn-secondary btn-sm" style="margin-left:4px" onclick="deleteCohort('${c.id}','${c.name.replace(/'/g,"\\'")}')">삭제</button>
                   </td>
                 </tr>
               `).join('')}
@@ -359,15 +506,23 @@
     }
 
     const el = document.getElementById('eventList');
+    document.getElementById('bulkBar').style.display = 'none';
+
     if (!filtered.length) { el.innerHTML = '<div class="empty">이벤트가 없습니다.</div>'; return; }
 
     const statusLabel = { pending: '링크 대기', links_entered: '링크 입력됨', sent: '발송완료', cancelled: '취소됨' };
 
     el.innerHTML = `<table>
-      <thead><tr><th>트랙/회차</th><th>이벤트</th><th>일시</th><th>상태</th><th>액션</th></tr></thead>
+      <thead>
+        <tr>
+          <th style="width:36px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+          <th>트랙/회차</th><th>이벤트</th><th>일시</th><th>상태</th><th>액션</th>
+        </tr>
+      </thead>
       <tbody>
         ${filtered.map(e => `
           <tr data-event-id="${e.id}">
+            <td><input type="checkbox" class="event-check" value="${e.id}" onchange="updateBulkBar()"></td>
             <td class="text-sm">${e.cohorts?.tracks?.name || ''} / ${e.cohorts?.name || ''}</td>
             <td>
               <span class="event-type">[${e.type}]</span> ${e.title}
@@ -386,6 +541,44 @@
         `).join('')}
       </tbody>
     </table>`;
+  }
+
+  // ===== 체크박스 / 일괄 삭제 =====
+  function toggleSelectAll(checkbox) {
+    document.querySelectorAll('.event-check').forEach(c => c.checked = checkbox.checked);
+    updateBulkBar();
+  }
+
+  function updateBulkBar() {
+    const checked = document.querySelectorAll('.event-check:checked');
+    const total = document.querySelectorAll('.event-check');
+    const bulkBar = document.getElementById('bulkBar');
+    const selectAll = document.getElementById('selectAll');
+    if (checked.length > 0) {
+      bulkBar.style.display = 'flex';
+      document.getElementById('selectedCount').textContent = `${checked.length}개 선택됨`;
+    } else {
+      bulkBar.style.display = 'none';
+    }
+    if (selectAll) selectAll.indeterminate = checked.length > 0 && checked.length < total.length;
+    if (selectAll) selectAll.checked = checked.length === total.length && total.length > 0;
+  }
+
+  function clearSelection() {
+    document.querySelectorAll('.event-check').forEach(c => c.checked = false);
+    const selectAll = document.getElementById('selectAll');
+    if (selectAll) selectAll.checked = false;
+    updateBulkBar();
+  }
+
+  async function deleteSelectedEvents() {
+    const checked = document.querySelectorAll('.event-check:checked');
+    if (!checked.length) return;
+    if (!confirm(`선택한 ${checked.length}개 이벤트를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+    const ids = Array.from(checked).map(c => c.value);
+    const { error } = await sb.from('events').delete().in('id', ids);
+    if (error) return alert('삭제 오류: ' + error.message);
+    loadEvents();
   }
 
   // ===== 이벤트 취소 =====
@@ -426,7 +619,6 @@
     if (type === '발표') updateData.presentation_order = presentation_order;
 
     const { error } = await sb.from('events').update(updateData).eq('id', id);
-
     if (error) return alert('저장 오류: ' + error.message);
     closeModal();
     loadEvents();
@@ -454,15 +646,11 @@
     if (!events || !events.length) return;
 
     const e = events[0];
-
-    // 해당 row 하이라이트
     const row = document.querySelector(`tr[data-event-id="${eventId}"]`);
     if (row) {
       row.classList.add('row-highlight');
       row.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-
-    // pending 상태면 모달 자동 열기
     if (e.status !== 'sent' && e.status !== 'cancelled') {
       openModal(e.id, e.type || '', e.title || '', e.student_link || '', e.ops_link || '', e.material_url || '', e.presentation_order || '');
     }

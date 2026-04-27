@@ -172,6 +172,7 @@
   <div class="modal">
     <h3 id="modalTitle">링크 입력</h3>
     <input type="hidden" id="modalEventId">
+    <input type="hidden" id="modalEventType">
     <div class="form-grid">
       <div class="form-group full">
         <label>수강생용 링크 (LMS 실시간 강의 URL)</label>
@@ -181,9 +182,13 @@
         <label>운영진용 링크 (Zoom 호스트 URL)</label>
         <input type="text" id="modalOpsLink" placeholder="https://...">
       </div>
-      <div class="form-group full">
+      <div class="form-group full" id="materialUrlGroup">
         <label>교안 링크 (노션 또는 PDF URL)</label>
         <input type="text" id="modalMaterialUrl" placeholder="https://...">
+      </div>
+      <div class="form-group full" id="presentationOrderGroup">
+        <label>발표 순서</label>
+        <textarea id="modalPresentationOrder" placeholder="1. 홍길동&#10;2. 김철수&#10;3. 이영희" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;width:100%;min-height:100px;resize:vertical;font-family:inherit"></textarea>
       </div>
     </div>
     <div class="modal-footer">
@@ -276,7 +281,10 @@
                   <td>${c.name}</td>
                   <td class="text-sm">${c.sheet_name || '-'}</td>
                   <td class="text-sm">${c.start_date || ''} ~ ${c.end_date || ''}</td>
-                  <td><button class="btn-secondary btn-sm" onclick="deleteCohort('${c.id}','${c.name}')">삭제</button></td>
+                  <td>
+                    <button class="btn-primary btn-sm" onclick="importSchedule('${c.id}','${c.name}')">시간표 불러오기</button>
+                    <button class="btn-secondary btn-sm" style="margin-left:4px" onclick="deleteCohort('${c.id}','${c.name}')">삭제</button>
+                  </td>
                 </tr>
               `).join('')}
             </tbody>
@@ -369,10 +377,10 @@
             <td><span class="badge badge-${e.status}">${statusLabel[e.status] || e.status}</span></td>
             <td>
               ${e.status === 'pending' ?
-                `<button class="btn-primary btn-sm" onclick="openModal('${e.id}','${(e.title||'').replace(/'/g,"\\'")}','${e.student_link||''}','${e.ops_link||''}','${e.material_url||''}')">링크 입력</button>
+                `<button class="btn-primary btn-sm" onclick="openModal('${e.id}','${e.type||''}','${(e.title||'').replace(/'/g,"\\'")}','${e.student_link||''}','${e.ops_link||''}','${e.material_url||''}','${(e.presentation_order||'').replace(/'/g,"\\'")}')">링크 입력</button>
                  <button class="btn-secondary btn-sm" style="margin-left:4px" onclick="cancelEvent('${e.id}')">취소</button>` : ''}
               ${e.status === 'links_entered' || e.status === 'sent' ?
-                `<button class="btn-secondary btn-sm" onclick="openModal('${e.id}','${(e.title||'').replace(/'/g,"\\'")}','${e.student_link||''}','${e.ops_link||''}','${e.material_url||''}')">수정</button>` : ''}
+                `<button class="btn-secondary btn-sm" onclick="openModal('${e.id}','${e.type||''}','${(e.title||'').replace(/'/g,"\\'")}','${e.student_link||''}','${e.ops_link||''}','${e.material_url||''}','${(e.presentation_order||'').replace(/'/g,"\\'")}')">수정</button>` : ''}
             </td>
           </tr>
         `).join('')}
@@ -388,12 +396,16 @@
   }
 
   // ===== 링크 입력 모달 =====
-  function openModal(id, title, studentLink, opsLink, materialUrl) {
+  function openModal(id, type, title, studentLink, opsLink, materialUrl, presentationOrder) {
     document.getElementById('modalEventId').value = id;
+    document.getElementById('modalEventType').value = type;
     document.getElementById('modalTitle').textContent = `링크 입력: ${title}`;
     document.getElementById('modalStudentLink').value = studentLink !== 'null' ? studentLink : '';
     document.getElementById('modalOpsLink').value = opsLink !== 'null' ? opsLink : '';
     document.getElementById('modalMaterialUrl').value = materialUrl !== 'null' ? materialUrl : '';
+    document.getElementById('modalPresentationOrder').value = presentationOrder !== 'null' ? presentationOrder : '';
+    document.getElementById('materialUrlGroup').style.display = type === '특강' ? 'flex' : 'none';
+    document.getElementById('presentationOrderGroup').style.display = type === '발표' ? 'flex' : 'none';
     document.getElementById('linkModal').classList.add('open');
   }
 
@@ -403,21 +415,22 @@
 
   async function saveLinks() {
     const id = document.getElementById('modalEventId').value;
+    const type = document.getElementById('modalEventType').value;
     const student_link = document.getElementById('modalStudentLink').value.trim();
     const ops_link = document.getElementById('modalOpsLink').value.trim();
     const material_url = document.getElementById('modalMaterialUrl').value.trim();
+    const presentation_order = document.getElementById('modalPresentationOrder').value.trim();
 
-    const { error } = await sb.from('events').update({
-      student_link,
-      ops_link,
-      material_url,
-      status: 'links_entered'
-    }).eq('id', id);
+    const updateData = { student_link, ops_link, status: 'links_entered' };
+    if (type === '특강') updateData.material_url = material_url;
+    if (type === '발표') updateData.presentation_order = presentation_order;
+
+    const { error } = await sb.from('events').update(updateData).eq('id', id);
 
     if (error) return alert('저장 오류: ' + error.message);
     closeModal();
     loadEvents();
-    if (material_url) {
+    if (type === '특강' && material_url) {
       fetch('https://teamsparta-ax.app.n8n.cloud/webhook/df2eaa88-964d-4c11-9970-8e313ed8af49', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -451,7 +464,24 @@
 
     // pending 상태면 모달 자동 열기
     if (e.status !== 'sent' && e.status !== 'cancelled') {
-      openModal(e.id, e.title || '', e.student_link || '', e.ops_link || '', e.material_url || '');
+      openModal(e.id, e.type || '', e.title || '', e.student_link || '', e.ops_link || '', e.material_url || '', e.presentation_order || '');
+    }
+  }
+
+  // ===== 시간표 일괄 등록 =====
+  const IMPORT_WEBHOOK_URL = 'https://teamsparta-ax.app.n8n.cloud/webhook/ac248fe1-b00a-49b8-89c2-8ed02aff54d8';
+
+  async function importSchedule(cohortId, cohortName) {
+    if (!confirm(`"${cohortName}" 시간표를 불러오시겠습니까?\n기존 이벤트와 중복될 수 있으니 주의해주세요.`)) return;
+    try {
+      await fetch(IMPORT_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cohort_id: cohortId })
+      });
+      alert('시간표 불러오기가 시작되었습니다!\n잠시 후 이벤트 탭에서 확인해주세요.');
+    } catch (e) {
+      alert('오류가 발생했습니다: ' + e.message);
     }
   }
 

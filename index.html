@@ -98,41 +98,21 @@
         <label>회차명</label>
         <input type="text" id="cohortName" placeholder="예: 9회차">
       </div>
-      <div class="form-group">
-        <label>Spreadsheet ID</label>
-        <input type="text" id="cohortSpreadsheetId" placeholder="구글 시트 ID">
-      </div>
-      <div class="form-group">
-        <label>Sheet Name</label>
-        <input type="text" id="cohortSheetName" placeholder="예: iOS_시간표">
-      </div>
       <div class="form-group full">
         <label>ZEP URL</label>
         <input type="text" id="cohortZepUrl" placeholder="https://zep.us/...">
       </div>
       <div class="form-group full">
-        <label>QR 입실 체크 링크</label>
+        <label>QR 입퇴실 체크 링크</label>
         <input type="text" id="cohortQrCheckUrl" placeholder="https://...">
       </div>
       <div class="form-group full">
-        <label>QR 입실 가이드 링크</label>
+        <label>QR 입퇴실 가이드 링크 (디마 전용)</label>
         <input type="text" id="cohortQrGuideUrl" placeholder="https://...">
       </div>
       <div class="form-group full">
         <label>슬랙 수강생 채널 ID</label>
         <input type="text" id="cohortSlackStudent" placeholder="C0XXXXXXXXX">
-      </div>
-      <div class="form-group full">
-        <label>슬랙 운영진 채널 ID</label>
-        <input type="text" id="cohortSlackOps" placeholder="C0XXXXXXXXX">
-      </div>
-      <div class="form-group">
-        <label>튜터 슬랙 핸들</label>
-        <input type="text" id="cohortTutor" placeholder="예: @tutor_name">
-      </div>
-      <div class="form-group">
-        <label>학관매 슬랙 핸들</label>
-        <input type="text" id="cohortHakgwanmae" placeholder="예: @manager_name">
       </div>
       <div class="form-group">
         <label>시작일</label>
@@ -244,41 +224,21 @@
         <label>회차명</label>
         <input type="text" id="editCohortName" placeholder="예: 9회차">
       </div>
-      <div class="form-group">
-        <label>Sheet Name</label>
-        <input type="text" id="editCohortSheetName" placeholder="예: iOS_시간표">
-      </div>
-      <div class="form-group full">
-        <label>Spreadsheet ID</label>
-        <input type="text" id="editCohortSpreadsheetId" placeholder="구글 시트 ID">
-      </div>
       <div class="form-group full">
         <label>ZEP URL</label>
         <input type="text" id="editCohortZepUrl" placeholder="https://zep.us/...">
       </div>
       <div class="form-group full">
-        <label>QR 입실 체크 링크</label>
+        <label>QR 입퇴실 체크 링크</label>
         <input type="text" id="editCohortQrCheckUrl" placeholder="https://...">
       </div>
       <div class="form-group full">
-        <label>QR 입실 가이드 링크</label>
+        <label>QR 입퇴실 가이드 링크 (디마 전용)</label>
         <input type="text" id="editCohortQrGuideUrl" placeholder="https://...">
       </div>
       <div class="form-group full">
         <label>슬랙 수강생 채널 ID</label>
         <input type="text" id="editCohortSlackStudent" placeholder="C0XXXXXXXXX">
-      </div>
-      <div class="form-group full">
-        <label>슬랙 운영진 채널 ID</label>
-        <input type="text" id="editCohortSlackOps" placeholder="C0XXXXXXXXX">
-      </div>
-      <div class="form-group">
-        <label>튜터 슬랙 핸들</label>
-        <input type="text" id="editCohortTutor" placeholder="예: @tutor_name">
-      </div>
-      <div class="form-group">
-        <label>학관매 슬랙 핸들</label>
-        <input type="text" id="editCohortHakgwanmae" placeholder="예: @manager_name">
       </div>
       <div class="form-group">
         <label>시작일</label>
@@ -359,24 +319,17 @@
     const { error } = await sb.from('cohorts').insert({
       track_id,
       name,
-      spreadsheet_id: extractSpreadsheetId(document.getElementById('cohortSpreadsheetId').value),
-      sheet_name: document.getElementById('cohortSheetName').value.trim(),
       zep_url: document.getElementById('cohortZepUrl').value.trim(),
       qr_check_url: document.getElementById('cohortQrCheckUrl').value.trim(),
       qr_guide_url: document.getElementById('cohortQrGuideUrl').value.trim(),
       slack_student_webhook: document.getElementById('cohortSlackStudent').value.trim(),
-      slack_ops_webhook: document.getElementById('cohortSlackOps').value.trim(),
-      tutor_handle: document.getElementById('cohortTutor').value.trim(),
-      hakgwanmae_handle: document.getElementById('cohortHakgwanmae').value.trim(),
       start_date: document.getElementById('cohortStartDate').value || null,
       end_date: document.getElementById('cohortEndDate').value || null,
     });
     if (error) return alert('오류: ' + error.message);
     alert('회차가 추가되었습니다!');
-    ['cohortName','cohortSpreadsheetId','cohortSheetName','cohortZepUrl',
-     'cohortQrCheckUrl','cohortQrGuideUrl',
-     'cohortSlackStudent','cohortSlackOps','cohortTutor','cohortHakgwanmae',
-     'cohortStartDate','cohortEndDate'].forEach(id => document.getElementById(id).value = '');
+    ['cohortName','cohortZepUrl','cohortQrCheckUrl','cohortQrGuideUrl',
+     'cohortSlackStudent','cohortStartDate','cohortEndDate'].forEach(id => document.getElementById(id).value = '');
     loadTracks();
   }
 
@@ -386,15 +339,10 @@
     if (error || !data) return alert('회차 정보를 불러오지 못했습니다.');
     document.getElementById('editCohortId').value = data.id;
     document.getElementById('editCohortName').value = data.name || '';
-    document.getElementById('editCohortSheetName').value = data.sheet_name || '';
-    document.getElementById('editCohortSpreadsheetId').value = data.spreadsheet_id || '';
     document.getElementById('editCohortZepUrl').value = data.zep_url || '';
     document.getElementById('editCohortQrCheckUrl').value = data.qr_check_url || '';
     document.getElementById('editCohortQrGuideUrl').value = data.qr_guide_url || '';
     document.getElementById('editCohortSlackStudent').value = data.slack_student_webhook || '';
-    document.getElementById('editCohortSlackOps').value = data.slack_ops_webhook || '';
-    document.getElementById('editCohortTutor').value = data.tutor_handle || '';
-    document.getElementById('editCohortHakgwanmae').value = data.hakgwanmae_handle || '';
     document.getElementById('editCohortStartDate').value = data.start_date || '';
     document.getElementById('editCohortEndDate').value = data.end_date || '';
     document.getElementById('editCohortModal').classList.add('open');
@@ -410,15 +358,10 @@
     if (!name) return alert('회차명을 입력해주세요.');
     const { error } = await sb.from('cohorts').update({
       name,
-      spreadsheet_id: extractSpreadsheetId(document.getElementById('editCohortSpreadsheetId').value),
-      sheet_name: document.getElementById('editCohortSheetName').value.trim(),
       zep_url: document.getElementById('editCohortZepUrl').value.trim(),
       qr_check_url: document.getElementById('editCohortQrCheckUrl').value.trim(),
       qr_guide_url: document.getElementById('editCohortQrGuideUrl').value.trim(),
       slack_student_webhook: document.getElementById('editCohortSlackStudent').value.trim(),
-      slack_ops_webhook: document.getElementById('editCohortSlackOps').value.trim(),
-      tutor_handle: document.getElementById('editCohortTutor').value.trim(),
-      hakgwanmae_handle: document.getElementById('editCohortHakgwanmae').value.trim(),
       start_date: document.getElementById('editCohortStartDate').value || null,
       end_date: document.getElementById('editCohortEndDate').value || null,
     }).eq('id', id);

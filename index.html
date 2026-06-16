@@ -10,11 +10,7 @@
     body { font-family: 'Apple SD Gothic Neo', sans-serif; background: #f5f6fa; color: #333; }
     header { background: #1a1a2e; color: white; padding: 16px 24px; }
     header h1 { font-size: 20px; }
-    .tabs { display: flex; background: white; border-bottom: 2px solid #e0e0e0; padding: 0 24px; }
-    .tab { padding: 14px 20px; cursor: pointer; font-weight: 600; color: #888; border-bottom: 3px solid transparent; margin-bottom: -2px; }
-    .tab.active { color: #4f46e5; border-bottom-color: #4f46e5; }
-    .tab-content { display: none; padding: 24px; }
-    .tab-content.active { display: block; }
+    .container { padding: 24px; }
     .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
     .card h2 { font-size: 16px; margin-bottom: 16px; color: #1a1a2e; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -28,22 +24,13 @@
     .btn-primary:hover { background: #3730a3; }
     .btn-secondary { background: #f3f4f6; color: #333; }
     .btn-secondary:hover { background: #e5e7eb; }
-    .btn-success { background: #10b981; color: white; }
-    .btn-success:hover { background: #059669; }
     .btn-warning { background: #f59e0b; color: white; }
     .btn-warning:hover { background: #d97706; }
-    .btn-danger { background: #ef4444; color: white; }
-    .btn-danger:hover { background: #dc2626; }
     .btn-sm { padding: 6px 12px; font-size: 12px; }
     table { width: 100%; border-collapse: collapse; }
     th { text-align: left; padding: 10px 12px; font-size: 12px; color: #666; border-bottom: 2px solid #f0f0f0; }
     td { padding: 12px; font-size: 14px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
-    .badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-    .badge-pending { background: #fef3c7; color: #d97706; }
-    .badge-links_entered { background: #dbeafe; color: #2563eb; }
-    .badge-sent { background: #d1fae5; color: #059669; }
-    .badge-cancelled { background: #fee2e2; color: #dc2626; }
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
     .modal-overlay.open { display: flex; }
     .modal { background: white; border-radius: 16px; padding: 24px; width: 500px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
@@ -53,14 +40,7 @@
     .flex { display: flex; gap: 8px; align-items: center; }
     .mt-12 { margin-top: 12px; }
     .text-sm { font-size: 13px; color: #666; }
-    .event-type { font-weight: 700; color: #4f46e5; }
     .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-    .filter-bar select { max-width: 180px; }
-    .row-highlight { background: #fffbeb !important; outline: 2px solid #f59e0b; }
-    input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: #4f46e5; }
-    .bulk-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; padding: 10px 12px; background: #f8f9ff; border-radius: 8px; border: 1px solid #e0e0ff; }
-    .bulk-bar span { font-size: 13px; color: #4f46e5; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -69,13 +49,7 @@
   <h1>📣 공지봇 관리자 페이지</h1>
 </header>
 
-<div class="tabs">
-  <div class="tab active" onclick="switchTab('tracks')">트랙 / 회차 관리</div>
-  <div class="tab" onclick="switchTab('events')">이벤트 관리</div>
-</div>
-
-<!-- ===== 트랙/회차 탭 ===== -->
-<div id="tab-tracks" class="tab-content active">
+<div class="container">
 
   <!-- 트랙 추가 -->
   <div class="card">
@@ -134,68 +108,7 @@
     </div>
     <div id="trackList"><div class="empty">불러오는 중...</div></div>
   </div>
-</div>
 
-<!-- ===== 이벤트 탭 ===== -->
-<div id="tab-events" class="tab-content">
-  <div class="card">
-    <div class="section-header">
-      <h2>이벤트 목록</h2>
-      <button class="btn-secondary btn-sm" onclick="loadEvents()">새로고침</button>
-    </div>
-    <div class="filter-bar">
-      <select id="filterTrack" onchange="filterCohorts()">
-        <option value="">전체 트랙</option>
-      </select>
-      <select id="filterCohort" onchange="loadEvents()">
-        <option value="">전체 회차</option>
-      </select>
-      <select id="filterStatus" onchange="loadEvents()">
-        <option value="">전체 상태</option>
-        <option value="pending">링크 입력 대기</option>
-        <option value="links_entered">링크 입력 완료</option>
-        <option value="sent">발송 완료</option>
-        <option value="cancelled">취소됨</option>
-      </select>
-    </div>
-    <div id="bulkBar" class="bulk-bar" style="display:none">
-      <span id="selectedCount">0개 선택됨</span>
-      <button class="btn-danger btn-sm" onclick="deleteSelectedEvents()">선택 삭제</button>
-      <button class="btn-secondary btn-sm" onclick="clearSelection()">선택 해제</button>
-    </div>
-    <div id="eventList"><div class="empty">불러오는 중...</div></div>
-  </div>
-</div>
-
-<!-- ===== 링크 입력 모달 ===== -->
-<div class="modal-overlay" id="linkModal">
-  <div class="modal">
-    <h3 id="modalTitle">링크 입력</h3>
-    <input type="hidden" id="modalEventId">
-    <input type="hidden" id="modalEventType">
-    <div class="form-grid">
-      <div class="form-group full">
-        <label>수강생용 링크 (LMS 실시간 강의 URL)</label>
-        <input type="text" id="modalStudentLink" placeholder="https://...">
-      </div>
-      <div class="form-group full">
-        <label>운영진용 링크 (Zoom 호스트 URL)</label>
-        <input type="text" id="modalOpsLink" placeholder="https://...">
-      </div>
-      <div class="form-group full" id="materialUrlGroup">
-        <label>교안 링크 (노션 또는 PDF URL)</label>
-        <input type="text" id="modalMaterialUrl" placeholder="https://...">
-      </div>
-      <div class="form-group full" id="presentationOrderGroup">
-        <label>발표 순서</label>
-        <textarea id="modalPresentationOrder" placeholder="1. 홍길동&#10;2. 김철수&#10;3. 이영희" style="padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;width:100%;min-height:100px;resize:vertical;font-family:inherit"></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-secondary" onclick="closeModal()">취소</button>
-      <button class="btn-success" onclick="saveLinks()">저장 및 공지 준비</button>
-    </div>
-  </div>
 </div>
 
 <!-- ===== 트랙 수정 모달 ===== -->
@@ -261,19 +174,6 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvbHp6d2tmcXVoYWlhanhscXdiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNDQ5MjMsImV4cCI6MjA5MTkyMDkyM30.NLwWCaMYTbfxdoXOxjkhaxFE1m75xvhIHnnfuVnsDjA';
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ===== 탭 전환 =====
-  function switchTab(tab) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
-    document.getElementById(`tab-${tab}`).classList.add('active');
-    if (tab === 'tracks') loadTracks();
-    if (tab === 'events') { loadFilterTracks(); loadEvents(); }
-  }
-
-  let allTracks = [];
-  let allCohorts = [];
-
   // ===== 트랙 추가 =====
   async function addTrack() {
     const name = document.getElementById('trackName').value.trim();
@@ -304,11 +204,6 @@
     if (error) return alert('오류: ' + error.message);
     closeEditTrackModal();
     loadTracks();
-  }
-
-  function extractSpreadsheetId(input) {
-    const match = input.match(/\/d\/([a-zA-Z0-9-_]+)/);
-    return match ? match[1] : input.trim();
   }
 
   // ===== 회차 추가 =====
@@ -374,7 +269,6 @@
   async function loadTracks() {
     const { data: tracks, error } = await sb.from('tracks').select('*, cohorts(*)').order('created_at');
     if (error) return;
-    allTracks = tracks;
     const el = document.getElementById('trackList');
     if (!tracks.length) { el.innerHTML = '<div class="empty">등록된 트랙이 없습니다.</div>'; return; }
     el.innerHTML = tracks.map(t => `
@@ -386,16 +280,14 @@
         </div>
         ${t.cohorts && t.cohorts.length ? `
           <table>
-            <thead><tr><th>회차</th><th>시트명</th><th>기간</th><th>액션</th></tr></thead>
+            <thead><tr><th>회차</th><th>기간</th><th>액션</th></tr></thead>
             <tbody>
               ${t.cohorts.map(c => `
                 <tr>
                   <td>${c.name}</td>
-                  <td class="text-sm">${c.sheet_name || '-'}</td>
                   <td class="text-sm">${c.start_date || ''} ~ ${c.end_date || ''}</td>
                   <td>
-                    <button class="btn-primary btn-sm" onclick="importSchedule('${c.id}','${c.name.replace(/'/g,"\\'")}')">시간표 불러오기</button>
-                    <button class="btn-warning btn-sm" style="margin-left:4px" onclick="openEditCohortModal('${c.id}')">수정</button>
+                    <button class="btn-warning btn-sm" onclick="openEditCohortModal('${c.id}')">수정</button>
                     <button class="btn-secondary btn-sm" style="margin-left:4px" onclick="deleteCohort('${c.id}','${c.name.replace(/'/g,"\\'")}')">삭제</button>
                   </td>
                 </tr>
@@ -427,222 +319,9 @@
       (tracks || []).map(t => `<option value="${t.id}">${t.name}</option>`).join('');
   }
 
-  // ===== 이벤트 필터 트랙 =====
-  async function loadFilterTracks() {
-    const { data: tracks } = await sb.from('tracks').select('id, name').order('created_at');
-    allTracks = tracks || [];
-    const sel = document.getElementById('filterTrack');
-    sel.innerHTML = '<option value="">전체 트랙</option>' +
-      allTracks.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-    await loadFilterCohorts();
-  }
-
-  async function filterCohorts() {
-    await loadFilterCohorts();
-    loadEvents();
-  }
-
-  async function loadFilterCohorts() {
-    const trackId = document.getElementById('filterTrack').value;
-    let query = sb.from('cohorts').select('id, name, track_id').order('created_at');
-    if (trackId) query = query.eq('track_id', trackId);
-    const { data: cohorts } = await query;
-    allCohorts = cohorts || [];
-    const sel = document.getElementById('filterCohort');
-    sel.innerHTML = '<option value="">전체 회차</option>' +
-      allCohorts.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-  }
-
-  // ===== 이벤트 목록 로드 =====
-  async function loadEvents() {
-    const cohortId = document.getElementById('filterCohort').value;
-    const status = document.getElementById('filterStatus').value;
-    const trackId = document.getElementById('filterTrack').value;
-
-    let query = sb.from('events').select('*, cohorts(name, track_id, tracks(name))').order('send_time', { ascending: true });
-    if (cohortId) query = query.eq('cohort_id', cohortId);
-    if (status) query = query.eq('status', status);
-
-    const { data: events, error } = await query;
-    if (error) return;
-
-    let filtered = events || [];
-    if (trackId && !cohortId) {
-      filtered = filtered.filter(e => e.cohorts?.track_id === trackId);
-    }
-
-    const el = document.getElementById('eventList');
-    document.getElementById('bulkBar').style.display = 'none';
-
-    if (!filtered.length) { el.innerHTML = '<div class="empty">이벤트가 없습니다.</div>'; return; }
-
-    const statusLabel = { pending: '링크 대기', links_entered: '링크 입력됨', sent: '발송완료', cancelled: '취소됨' };
-
-    el.innerHTML = `<table>
-      <thead>
-        <tr>
-          <th style="width:36px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
-          <th>트랙/회차</th><th>이벤트</th><th>일시</th><th>상태</th><th>액션</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${filtered.map(e => `
-          <tr data-event-id="${e.id}">
-            <td><input type="checkbox" class="event-check" value="${e.id}" onchange="updateBulkBar()"></td>
-            <td class="text-sm">${e.cohorts?.tracks?.name || ''} / ${e.cohorts?.name || ''}</td>
-            <td>
-              <span class="event-type">[${e.type}]</span> ${e.title}
-              ${e.zoom_url ? '<br><span class="text-sm">🎥 줌 자동생성됨</span>' : ''}
-            </td>
-            <td class="text-sm">${e.date || ''} ${e.start_time || ''}~${e.end_time || ''}</td>
-            <td><span class="badge badge-${e.status}">${statusLabel[e.status] || e.status}</span></td>
-            <td>
-              ${e.status === 'pending' ?
-                `<button class="btn-primary btn-sm" onclick="openModal('${e.id}','${e.type||''}','${(e.title||'').replace(/'/g,"\\'")}','${e.student_link||''}','${e.ops_link||''}','${e.material_url||''}','${(e.presentation_order||'').replace(/'/g,"\\'")}')">링크 입력</button>
-                 <button class="btn-secondary btn-sm" style="margin-left:4px" onclick="cancelEvent('${e.id}')">취소</button>` : ''}
-              ${e.status === 'links_entered' || e.status === 'sent' ?
-                `<button class="btn-secondary btn-sm" onclick="openModal('${e.id}','${e.type||''}','${(e.title||'').replace(/'/g,"\\'")}','${e.student_link||''}','${e.ops_link||''}','${e.material_url||''}','${(e.presentation_order||'').replace(/'/g,"\\'")}')">수정</button>` : ''}
-            </td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>`;
-  }
-
-  // ===== 체크박스 / 일괄 삭제 =====
-  function toggleSelectAll(checkbox) {
-    document.querySelectorAll('.event-check').forEach(c => c.checked = checkbox.checked);
-    updateBulkBar();
-  }
-
-  function updateBulkBar() {
-    const checked = document.querySelectorAll('.event-check:checked');
-    const total = document.querySelectorAll('.event-check');
-    const bulkBar = document.getElementById('bulkBar');
-    const selectAll = document.getElementById('selectAll');
-    if (checked.length > 0) {
-      bulkBar.style.display = 'flex';
-      document.getElementById('selectedCount').textContent = `${checked.length}개 선택됨`;
-    } else {
-      bulkBar.style.display = 'none';
-    }
-    if (selectAll) selectAll.indeterminate = checked.length > 0 && checked.length < total.length;
-    if (selectAll) selectAll.checked = checked.length === total.length && total.length > 0;
-  }
-
-  function clearSelection() {
-    document.querySelectorAll('.event-check').forEach(c => c.checked = false);
-    const selectAll = document.getElementById('selectAll');
-    if (selectAll) selectAll.checked = false;
-    updateBulkBar();
-  }
-
-  async function deleteSelectedEvents() {
-    const checked = document.querySelectorAll('.event-check:checked');
-    if (!checked.length) return;
-    if (!confirm(`선택한 ${checked.length}개 이벤트를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
-    const ids = Array.from(checked).map(c => c.value);
-    const { error } = await sb.from('events').delete().in('id', ids);
-    if (error) return alert('삭제 오류: ' + error.message);
-    loadEvents();
-  }
-
-  // ===== 이벤트 취소 =====
-  async function cancelEvent(id) {
-    if (!confirm('이 이벤트의 공지를 취소하시겠습니까?')) return;
-    await sb.from('events').update({ status: 'cancelled' }).eq('id', id);
-    loadEvents();
-  }
-
-  // ===== 링크 입력 모달 =====
-  function openModal(id, type, title, studentLink, opsLink, materialUrl, presentationOrder) {
-    document.getElementById('modalEventId').value = id;
-    document.getElementById('modalEventType').value = type;
-    document.getElementById('modalTitle').textContent = `링크 입력: ${title}`;
-    document.getElementById('modalStudentLink').value = studentLink !== 'null' ? studentLink : '';
-    document.getElementById('modalOpsLink').value = opsLink !== 'null' ? opsLink : '';
-    document.getElementById('modalMaterialUrl').value = materialUrl !== 'null' ? materialUrl : '';
-    document.getElementById('modalPresentationOrder').value = presentationOrder !== 'null' ? presentationOrder : '';
-    document.getElementById('materialUrlGroup').style.display = type === '특강' ? 'flex' : 'none';
-    document.getElementById('presentationOrderGroup').style.display = type === '발표' ? 'flex' : 'none';
-    document.getElementById('linkModal').classList.add('open');
-  }
-
-  function closeModal() {
-    document.getElementById('linkModal').classList.remove('open');
-  }
-
-  async function saveLinks() {
-    const id = document.getElementById('modalEventId').value;
-    const type = document.getElementById('modalEventType').value;
-    const student_link = document.getElementById('modalStudentLink').value.trim();
-    const ops_link = document.getElementById('modalOpsLink').value.trim();
-    const material_url = document.getElementById('modalMaterialUrl').value.trim();
-    const presentation_order = document.getElementById('modalPresentationOrder').value.trim();
-
-    const updateData = { student_link, ops_link, status: 'links_entered' };
-    if (type === '특강') updateData.material_url = material_url;
-    if (type === '발표') updateData.presentation_order = presentation_order;
-
-    const { error } = await sb.from('events').update(updateData).eq('id', id);
-    if (error) return alert('저장 오류: ' + error.message);
-    closeModal();
-    loadEvents();
-    if (type === '특강' && material_url) {
-      fetch('https://teamsparta-ax.app.n8n.cloud/webhook/df2eaa88-964d-4c11-9970-8e313ed8af49', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event_id: id, material_url })
-      });
-    }
-  }
-
-  // ===== URL 파라미터 처리 =====
-  async function checkUrlParams() {
-    const params = new URLSearchParams(window.location.search);
-    const eventId = params.get('event_id');
-    if (!eventId) return;
-
-    switchTab('events');
-    await new Promise(r => setTimeout(r, 500));
-
-    const { data: events } = await sb.from('events')
-      .select('*, cohorts(name, track_id)')
-      .eq('id', eventId);
-    if (!events || !events.length) return;
-
-    const e = events[0];
-    const row = document.querySelector(`tr[data-event-id="${eventId}"]`);
-    if (row) {
-      row.classList.add('row-highlight');
-      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-    if (e.status !== 'sent' && e.status !== 'cancelled') {
-      openModal(e.id, e.type || '', e.title || '', e.student_link || '', e.ops_link || '', e.material_url || '', e.presentation_order || '');
-    }
-  }
-
-  // ===== 시간표 일괄 등록 =====
-  const IMPORT_WEBHOOK_URL = 'https://teamsparta-ax.app.n8n.cloud/webhook/ac248fe1-b00a-49b8-89c2-8ed02aff54d8';
-
-  async function importSchedule(cohortId, cohortName) {
-    if (!confirm(`"${cohortName}" 시간표를 불러오시겠습니까?\n기존 이벤트와 중복될 수 있으니 주의해주세요.`)) return;
-    try {
-      await fetch(IMPORT_WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cohort_id: cohortId })
-      });
-      alert('시간표 불러오기가 시작되었습니다!\n잠시 후 이벤트 탭에서 확인해주세요.');
-    } catch (e) {
-      alert('오류가 발생했습니다: ' + e.message);
-    }
-  }
-
   // ===== 초기 로드 =====
   loadTracks();
   loadCohortTrackOptions();
-  checkUrlParams();
 </script>
 </body>
 </html>

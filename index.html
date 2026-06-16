@@ -4,107 +4,196 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>공지봇 관리자 페이지</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    :root {
+      --violet: #a78bfa;       --violet-deep: #7c3aed;
+      --violet-soft: #ede9fe;  --violet-line: #e9d5ff;
+      --pink-soft: #fce7f3;    --pink-deep: #db2777;
+      --mint-soft: #d1fae5;    --mint-deep: #059669;
+      --peach-soft: #fef3c7;   --peach-deep: #d97706;
+      --rose-soft: #ffe4e6;    --rose-deep: #e11d48;
+      --ink: #3b3a45;          --muted: #8b8a99;
+      --radius: 22px;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Apple SD Gothic Neo', sans-serif; background: #f5f6fa; color: #333; }
-    header { background: #1a1a2e; color: white; padding: 16px 24px; }
-    header h1 { font-size: 20px; }
-    .container { padding: 24px; }
-    .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .card h2 { font-size: 16px; margin-bottom: 16px; color: #1a1a2e; }
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    body {
+      font-family: 'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', sans-serif;
+      color: var(--ink);
+      background: linear-gradient(135deg, #fdf2fb 0%, #eef2ff 45%, #ecfdf5 100%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      padding: 28px 24px 26px;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 24px; font-weight: 800; letter-spacing: -0.5px;
+      display: inline-flex; align-items: center; gap: 10px;
+      color: #4c3a8c;
+    }
+    header p { margin-top: 6px; font-size: 13px; color: var(--muted); font-weight: 500; }
+    .container { max-width: 880px; margin: 0 auto; padding: 4px 20px 60px; }
+
+    .card {
+      background: rgba(255,255,255,0.78);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.9);
+      border-radius: var(--radius);
+      padding: 26px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px -12px rgba(124,58,237,0.18);
+    }
+    .card h2 {
+      font-size: 17px; font-weight: 700; margin-bottom: 20px; color: #4c3a8c;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 7px; }
     .form-group.full { grid-column: 1 / -1; }
-    label { font-size: 12px; color: #666; font-weight: 600; }
-    input, select, textarea { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; width: 100%; }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: #4f46e5; }
-    button { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; }
-    .btn-primary { background: #4f46e5; color: white; }
-    .btn-primary:hover { background: #3730a3; }
-    .btn-secondary { background: #f3f4f6; color: #333; }
-    .btn-secondary:hover { background: #e5e7eb; }
-    .btn-warning { background: #f59e0b; color: white; }
-    .btn-warning:hover { background: #d97706; }
-    .btn-sm { padding: 6px 12px; font-size: 12px; }
-    table { width: 100%; border-collapse: collapse; }
-    th { text-align: left; padding: 10px 12px; font-size: 12px; color: #666; border-bottom: 2px solid #f0f0f0; }
-    td { padding: 12px; font-size: 14px; border-bottom: 1px solid #f5f5f5; vertical-align: middle; }
-    tr:last-child td { border-bottom: none; }
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+    label {
+      font-size: 12.5px; color: #6b6a78; font-weight: 600;
+      display: flex; align-items: center; gap: 5px;
+    }
+    input, select, textarea {
+      padding: 12px 14px; border: 1.5px solid #efe9fb; border-radius: 13px;
+      font-size: 14px; width: 100%; background: #fbf9ff; color: var(--ink);
+      font-family: inherit; transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    input::placeholder { color: #c2bfd0; }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--violet); background: #fff;
+      box-shadow: 0 0 0 4px rgba(167,139,250,0.18);
+    }
+
+    button {
+      padding: 12px 22px; border: none; border-radius: 999px; cursor: pointer;
+      font-weight: 700; font-size: 14px; font-family: inherit;
+      transition: transform .12s ease, box-shadow .15s ease, background .15s;
+    }
+    button:active { transform: translateY(1px) scale(0.99); }
+    .btn-primary {
+      background: linear-gradient(135deg, #b794f6, #9b6dff);
+      color: #fff; box-shadow: 0 8px 18px -7px rgba(124,58,237,0.6);
+    }
+    .btn-primary:hover { box-shadow: 0 10px 22px -6px rgba(124,58,237,0.7); }
+    .btn-secondary { background: #fff; color: var(--violet-deep); border: 1.5px solid var(--violet-line); }
+    .btn-secondary:hover { background: var(--violet-soft); }
+    .btn-warning { background: var(--peach-soft); color: var(--peach-deep); }
+    .btn-warning:hover { background: #fde68a; }
+    .btn-danger { background: var(--rose-soft); color: var(--rose-deep); }
+    .btn-danger:hover { background: #fecdd3; }
+    .btn-sm { padding: 7px 14px; font-size: 12.5px; }
+
+    .track-block {
+      border: 1.5px solid #f0ebfb; border-radius: 18px; padding: 18px 18px 8px;
+      margin-bottom: 16px; background: linear-gradient(180deg, #faf7ff, #ffffff);
+    }
+    .track-name {
+      font-weight: 800; font-size: 16px; color: #4c3a8c;
+      display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .track-chip {
+      background: var(--violet-soft); color: var(--violet-deep);
+      padding: 5px 13px; border-radius: 999px; font-size: 14px; font-weight: 700;
+    }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    th {
+      text-align: left; padding: 9px 14px; font-size: 11.5px; color: var(--muted);
+      font-weight: 600; text-transform: uppercase; letter-spacing: .4px;
+    }
+    td { padding: 13px 14px; font-size: 14px; border-top: 1px solid #f4f0fb; vertical-align: middle; }
+    tbody tr:hover { background: #faf7ff; }
+    .period { display: inline-flex; align-items: center; gap: 6px; color: #6b6a78; font-size: 13px; }
+
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(76,58,140,0.28);
+      backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; padding: 16px;
+    }
     .modal-overlay.open { display: flex; }
-    .modal { background: white; border-radius: 16px; padding: 24px; width: 500px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
-    .modal h3 { margin-bottom: 16px; font-size: 18px; }
-    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
-    .empty { color: #aaa; text-align: center; padding: 32px; font-size: 14px; }
-    .flex { display: flex; gap: 8px; align-items: center; }
-    .mt-12 { margin-top: 12px; }
-    .text-sm { font-size: 13px; color: #666; }
-    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .modal {
+      background: #fff; border-radius: 26px; padding: 28px; width: 520px; max-width: 100%;
+      max-height: 90vh; overflow-y: auto; box-shadow: 0 30px 70px -20px rgba(76,58,140,0.45);
+      animation: pop .18s ease;
+    }
+    @keyframes pop { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal h3 { margin-bottom: 20px; font-size: 19px; font-weight: 800; color: #4c3a8c; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+
+    .empty { color: #b3b0c2; text-align: center; padding: 36px; font-size: 14px; }
+    .flex { display: flex; gap: 10px; align-items: center; }
+    .mt-12 { margin-top: 18px; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .section-header h2 { margin-bottom: 0; }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>📣 공지봇 관리자 페이지</h1>
+  <h1>🌸 공지봇 관리자 페이지</h1>
+  <p>트랙 · 회차별 입퇴실 공지를 관리해요</p>
 </header>
 
 <div class="container">
 
   <!-- 트랙 추가 -->
   <div class="card">
-    <h2>트랙 추가</h2>
+    <h2>🏷️ 트랙 추가</h2>
     <div class="flex">
-      <input type="text" id="trackName" placeholder="트랙명 (예: iOS, Android, Web)" style="max-width:300px">
+      <input type="text" id="trackName" placeholder="트랙명 (예: iOS, Android, Web)" style="max-width:320px">
       <button class="btn-primary" onclick="addTrack()">추가</button>
     </div>
   </div>
 
   <!-- 회차 추가 -->
   <div class="card">
-    <h2>회차 추가</h2>
+    <h2>📅 회차 추가</h2>
     <div class="form-grid">
       <div class="form-group">
-        <label>트랙 선택</label>
+        <label>🎯 트랙 선택</label>
         <select id="cohortTrack"></select>
       </div>
       <div class="form-group">
-        <label>회차명</label>
+        <label>🔢 회차명</label>
         <input type="text" id="cohortName" placeholder="예: 9회차">
       </div>
       <div class="form-group full">
-        <label>ZEP URL</label>
+        <label>🟣 ZEP URL</label>
         <input type="text" id="cohortZepUrl" placeholder="https://zep.us/...">
       </div>
       <div class="form-group full">
-        <label>QR 입퇴실 체크 링크</label>
+        <label>✅ QR 입퇴실 체크 링크</label>
         <input type="text" id="cohortQrCheckUrl" placeholder="https://...">
       </div>
       <div class="form-group full">
-        <label>QR 입퇴실 가이드 링크 (디마 전용)</label>
+        <label>📖 QR 입퇴실 가이드 링크 <span style="color:var(--pink-deep)">(디마 전용)</span></label>
         <input type="text" id="cohortQrGuideUrl" placeholder="https://...">
       </div>
       <div class="form-group full">
-        <label>슬랙 수강생 채널 ID</label>
+        <label>💬 슬랙 수강생 채널 ID</label>
         <input type="text" id="cohortSlackStudent" placeholder="C0XXXXXXXXX">
       </div>
       <div class="form-group">
-        <label>시작일</label>
+        <label>📆 시작일</label>
         <input type="date" id="cohortStartDate">
       </div>
       <div class="form-group">
-        <label>종료일</label>
+        <label>🏁 종료일</label>
         <input type="date" id="cohortEndDate">
       </div>
     </div>
-    <button class="btn-primary mt-12" onclick="addCohort()">회차 추가</button>
+    <button class="btn-primary mt-12" onclick="addCohort()">＋ 회차 추가</button>
   </div>
 
   <!-- 트랙/회차 목록 -->
   <div class="card">
     <div class="section-header">
-      <h2>트랙 / 회차 목록</h2>
-      <button class="btn-secondary btn-sm" onclick="loadTracks()">새로고침</button>
+      <h2>🗂️ 트랙 / 회차 목록</h2>
+      <button class="btn-secondary btn-sm" onclick="loadTracks()">↻ 새로고침</button>
     </div>
     <div id="trackList"><div class="empty">불러오는 중...</div></div>
   </div>
@@ -114,10 +203,10 @@
 <!-- ===== 트랙 수정 모달 ===== -->
 <div class="modal-overlay" id="editTrackModal">
   <div class="modal">
-    <h3>트랙 수정</h3>
+    <h3>✏️ 트랙 수정</h3>
     <input type="hidden" id="editTrackId">
     <div class="form-group">
-      <label>트랙명</label>
+      <label>🏷️ 트랙명</label>
       <input type="text" id="editTrackName" placeholder="트랙명">
     </div>
     <div class="modal-footer">
@@ -130,35 +219,35 @@
 <!-- ===== 회차 수정 모달 ===== -->
 <div class="modal-overlay" id="editCohortModal">
   <div class="modal">
-    <h3>회차 수정</h3>
+    <h3>✏️ 회차 수정</h3>
     <input type="hidden" id="editCohortId">
     <div class="form-grid">
       <div class="form-group">
-        <label>회차명</label>
+        <label>🔢 회차명</label>
         <input type="text" id="editCohortName" placeholder="예: 9회차">
       </div>
       <div class="form-group full">
-        <label>ZEP URL</label>
+        <label>🟣 ZEP URL</label>
         <input type="text" id="editCohortZepUrl" placeholder="https://zep.us/...">
       </div>
       <div class="form-group full">
-        <label>QR 입퇴실 체크 링크</label>
+        <label>✅ QR 입퇴실 체크 링크</label>
         <input type="text" id="editCohortQrCheckUrl" placeholder="https://...">
       </div>
       <div class="form-group full">
-        <label>QR 입퇴실 가이드 링크 (디마 전용)</label>
+        <label>📖 QR 입퇴실 가이드 링크 <span style="color:var(--pink-deep)">(디마 전용)</span></label>
         <input type="text" id="editCohortQrGuideUrl" placeholder="https://...">
       </div>
       <div class="form-group full">
-        <label>슬랙 수강생 채널 ID</label>
+        <label>💬 슬랙 수강생 채널 ID</label>
         <input type="text" id="editCohortSlackStudent" placeholder="C0XXXXXXXXX">
       </div>
       <div class="form-group">
-        <label>시작일</label>
+        <label>📆 시작일</label>
         <input type="date" id="editCohortStartDate">
       </div>
       <div class="form-group">
-        <label>종료일</label>
+        <label>🏁 종료일</label>
         <input type="date" id="editCohortEndDate">
       </div>
     </div>
@@ -270,32 +359,32 @@
     const { data: tracks, error } = await sb.from('tracks').select('*, cohorts(*)').order('created_at');
     if (error) return;
     const el = document.getElementById('trackList');
-    if (!tracks.length) { el.innerHTML = '<div class="empty">등록된 트랙이 없습니다.</div>'; return; }
+    if (!tracks.length) { el.innerHTML = '<div class="empty">아직 등록된 트랙이 없어요 🌱</div>'; return; }
     el.innerHTML = tracks.map(t => `
-      <div style="margin-bottom:16px">
-        <div style="font-weight:700;font-size:15px;color:#1a1a2e;margin-bottom:8px">
-          🏷️ ${t.name}
-          <button class="btn-warning btn-sm" style="margin-left:8px" onclick="openEditTrackModal('${t.id}','${t.name.replace(/'/g,"\\'")}')">수정</button>
-          <button class="btn-secondary btn-sm" style="margin-left:4px" onclick="deleteTrack('${t.id}','${t.name.replace(/'/g,"\\'")}')">삭제</button>
+      <div class="track-block">
+        <div class="track-name">
+          <span class="track-chip">🏷️ ${t.name}</span>
+          <button class="btn-warning btn-sm" onclick="openEditTrackModal('${t.id}','${t.name.replace(/'/g,"\\'")}')">수정</button>
+          <button class="btn-danger btn-sm" onclick="deleteTrack('${t.id}','${t.name.replace(/'/g,"\\'")}')">삭제</button>
         </div>
         ${t.cohorts && t.cohorts.length ? `
           <table>
-            <thead><tr><th>회차</th><th>기간</th><th>액션</th></tr></thead>
+            <thead><tr><th>회차</th><th>기간</th><th style="text-align:right">액션</th></tr></thead>
             <tbody>
               ${t.cohorts.map(c => `
                 <tr>
-                  <td>${c.name}</td>
-                  <td class="text-sm">${c.start_date || ''} ~ ${c.end_date || ''}</td>
-                  <td>
+                  <td style="font-weight:600">${c.name}</td>
+                  <td><span class="period">📆 ${c.start_date || '–'} ~ ${c.end_date || '–'}</span></td>
+                  <td style="text-align:right;white-space:nowrap">
                     <button class="btn-warning btn-sm" onclick="openEditCohortModal('${c.id}')">수정</button>
-                    <button class="btn-secondary btn-sm" style="margin-left:4px" onclick="deleteCohort('${c.id}','${c.name.replace(/'/g,"\\'")}')">삭제</button>
+                    <button class="btn-danger btn-sm" style="margin-left:6px" onclick="deleteCohort('${c.id}','${c.name.replace(/'/g,"\\'")}')">삭제</button>
                   </td>
                 </tr>
               `).join('')}
             </tbody>
-          </table>` : '<div class="text-sm" style="padding:8px;color:#aaa">등록된 회차 없음</div>'}
+          </table>` : '<div class="empty" style="padding:14px">등록된 회차 없음</div>'}
       </div>
-    `).join('<hr style="margin:16px 0;border:none;border-top:1px solid #f0f0f0">');
+    `).join('');
     loadCohortTrackOptions();
   }
 

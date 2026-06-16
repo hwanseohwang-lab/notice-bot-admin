@@ -111,6 +111,14 @@
         <input type="text" id="cohortZepUrl" placeholder="https://zep.us/...">
       </div>
       <div class="form-group full">
+        <label>QR 입실 체크 링크</label>
+        <input type="text" id="cohortQrCheckUrl" placeholder="https://...">
+      </div>
+      <div class="form-group full">
+        <label>QR 입실 가이드 링크</label>
+        <input type="text" id="cohortQrGuideUrl" placeholder="https://...">
+      </div>
+      <div class="form-group full">
         <label>슬랙 수강생 채널 ID</label>
         <input type="text" id="cohortSlackStudent" placeholder="C0XXXXXXXXX">
       </div>
@@ -249,6 +257,14 @@
         <input type="text" id="editCohortZepUrl" placeholder="https://zep.us/...">
       </div>
       <div class="form-group full">
+        <label>QR 입실 체크 링크</label>
+        <input type="text" id="editCohortQrCheckUrl" placeholder="https://...">
+      </div>
+      <div class="form-group full">
+        <label>QR 입실 가이드 링크</label>
+        <input type="text" id="editCohortQrGuideUrl" placeholder="https://...">
+      </div>
+      <div class="form-group full">
         <label>슬랙 수강생 채널 ID</label>
         <input type="text" id="editCohortSlackStudent" placeholder="C0XXXXXXXXX">
       </div>
@@ -346,6 +362,8 @@
       spreadsheet_id: extractSpreadsheetId(document.getElementById('cohortSpreadsheetId').value),
       sheet_name: document.getElementById('cohortSheetName').value.trim(),
       zep_url: document.getElementById('cohortZepUrl').value.trim(),
+      qr_check_url: document.getElementById('cohortQrCheckUrl').value.trim(),
+      qr_guide_url: document.getElementById('cohortQrGuideUrl').value.trim(),
       slack_student_webhook: document.getElementById('cohortSlackStudent').value.trim(),
       slack_ops_webhook: document.getElementById('cohortSlackOps').value.trim(),
       tutor_handle: document.getElementById('cohortTutor').value.trim(),
@@ -356,6 +374,7 @@
     if (error) return alert('오류: ' + error.message);
     alert('회차가 추가되었습니다!');
     ['cohortName','cohortSpreadsheetId','cohortSheetName','cohortZepUrl',
+     'cohortQrCheckUrl','cohortQrGuideUrl',
      'cohortSlackStudent','cohortSlackOps','cohortTutor','cohortHakgwanmae',
      'cohortStartDate','cohortEndDate'].forEach(id => document.getElementById(id).value = '');
     loadTracks();
@@ -370,6 +389,8 @@
     document.getElementById('editCohortSheetName').value = data.sheet_name || '';
     document.getElementById('editCohortSpreadsheetId').value = data.spreadsheet_id || '';
     document.getElementById('editCohortZepUrl').value = data.zep_url || '';
+    document.getElementById('editCohortQrCheckUrl').value = data.qr_check_url || '';
+    document.getElementById('editCohortQrGuideUrl').value = data.qr_guide_url || '';
     document.getElementById('editCohortSlackStudent').value = data.slack_student_webhook || '';
     document.getElementById('editCohortSlackOps').value = data.slack_ops_webhook || '';
     document.getElementById('editCohortTutor').value = data.tutor_handle || '';
@@ -392,6 +413,8 @@
       spreadsheet_id: extractSpreadsheetId(document.getElementById('editCohortSpreadsheetId').value),
       sheet_name: document.getElementById('editCohortSheetName').value.trim(),
       zep_url: document.getElementById('editCohortZepUrl').value.trim(),
+      qr_check_url: document.getElementById('editCohortQrCheckUrl').value.trim(),
+      qr_guide_url: document.getElementById('editCohortQrGuideUrl').value.trim(),
       slack_student_webhook: document.getElementById('editCohortSlackStudent').value.trim(),
       slack_ops_webhook: document.getElementById('editCohortSlackOps').value.trim(),
       tutor_handle: document.getElementById('editCohortTutor').value.trim(),
